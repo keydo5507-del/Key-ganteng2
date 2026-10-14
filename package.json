@@ -1,0 +1,11 @@
+{
+  "name": "catbox-uploader",
+  "version": "3.0.0",
+  "description": "Catbox Uploader - Web + Telegram Bot (Vercel)",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "form-data": "^4.0.0",
+    "formidable": "^3.5.1",
+    "telegraf": "^4.16.3"
+  }
+}
