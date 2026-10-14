@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Catbox Uploader</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.sub {
+      color: #a1a1aa;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
+    .drop-zone {
+      border: 2px dashed #6366f1;
+      border-radius: 16px;
+      padding: 40px 20px;
+      cursor: pointer;
+      transition: all 0.25s;
+      background: rgba(99,102,241,0.08);
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      background: rgba(99,102,241,0.18);
+      border-color: #818cf8;
+    }
+    .drop-zone svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+    .drop-zone p {
+      color: #c4b5fd;
+      font-size: 0.95rem;
+    }
+    #fileInput { display: none; }
+    .btn {
+      margin-top: 20px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .progress {
+      margin-top: 20px;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #6366f1, #a78bfa);
+      transition: width 0.3s;
+    }
+    .result {
+      margin-top: 24px;
+      padding: 16px;
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.4);
+      border-radius: 12px;
+      display: none;
+      text-align: left;
+      word-break: break-all;
+    }
+    .result a {
+      color: #6ee7b7;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .result a:hover { text-decoration: underline; }
+    .error {
+      margin-top: 20px;
+      padding: 14px;
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 12px;
+      color: #fca5a5;
+      display: none;
+    }
+    .file-name {
+      margin-top: 12px;
+      color: #a5b4fc;
+      font-size: 0.9rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Catbox Uploader</h1>
+    <p class="sub">Upload foto, video, atau file → dapat link langsung</p>
+
+    <div class="drop-zone" id="dropZone">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="#a78bfa">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+      </svg>
+      <p>Klik atau tarik file ke sini</p>
+      <p style="font-size:0.8rem;margin-top:6px;opacity:0.7">Maksimal 200 MB</p>
+    </div>
+
+    <input type="file" id="fileInput" />
+
+    <div class="file-name" id="fileName"></div>
+
+    <button class="btn" id="uploadBtn" disabled>Upload ke Catbox</button>
+
+    <div class="progress" id="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="result" id="result">
+      <div style="margin-bottom:8px;color:#6ee7b7;font-weight:600">✅ Upload Berhasil!</div>
+      <a id="resultLink" href="#" target="_blank"></a>
+    </div>
+
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileName = document.getElementById('fileName');
+    const progress = document.getElementById('progress');
+    const progressBar = document.getElementById('progressBar');
+    const result = document.getElementById('result');
+    const resultLink = document.getElementById('resultLink');
+    const errorBox = document.getElementById('error');
+
+    let selectedFile = null;
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) handleFile(fileInput.files[0]);
+    });
+
+    function handleFile(file) {
+      selectedFile = file;
+      fileName.style.display = 'block';
+      fileName.textContent = `📎 \( {file.name} ( \){(file.size / 1024 / 1024).toFixed(2)} MB)`;
+      uploadBtn.disabled = false;
+      result.style.display = 'none';
+      errorBox.style.display = 'none';
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Mengupload...';
+      progress.style.display = 'block';
+      progressBar.style.width = '30%';
+      result.style.display = 'none';
+      errorBox.style.display = 'none';
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        progressBar.style.width = '60%';
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        progressBar.style.width = '100%';
+
+        if (data.success) {
+          resultLink.href = data.url;
+          resultLink.textContent = data.url;
+          result.style.display = 'block';
+        } else {
+          throw new Error(data.error || 'Upload gagal');
+        }
+      } catch (err) {
+        errorBox.textContent = '❌ ' + err.message;
+        errorBox.style.display = 'block';
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Upload ke Catbox';
+        setTimeout(() => {
+          progress.style.display = 'none';
+          progressBar.style.width = '0%';
+        }, 800);
+      }
+    });
+  </script>
+</body>
+  </html>
